@@ -179,6 +179,7 @@ def neural_ode(thetas):
     batch_ids = np.random.choice(tsteps-batch_tsteps,num_batches)
 
     # Minibatching within sampled domain
+    total_batch_loss = 0.0
     for j in range(num_batches):
         start_id = batch_ids[j]
         end_id = start_id + batch_tsteps
@@ -211,6 +212,9 @@ def neural_ode(thetas):
         dldt = np.matmul(dldz,batch_rhs_array[j,-1,:])
         dldt = np.reshape(dldt,newshape=(1,1))
 
+        # Find batch loss
+        total_batch_loss = total_batch_loss + np.sum((output_state-true_state_array[end_id-1,:])**2)
+
         # Reverse operation (adjoint evolution in backward time)
         _augmented_state = np.concatenate((dldz,dldthetas,dldt),axis=1)
         for i in range(1,batch_tsteps):
@@ -226,7 +230,7 @@ def neural_ode(thetas):
         
         augmented_state = np.add(augmented_state,_augmented_state)
     
-    return augmented_state
+    return augmented_state, total_batch_loss
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -254,14 +258,14 @@ def visualize(mode='train'):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def rms_prop_optimize(thetas):
-    num_epochs = 1000
-    lr = 0.01
+    num_epochs = 200
+    lr = 0.005
     beta = 0.9
     lr_counter = 0
     exp_gradient = np.zeros(shape=(1,num_wb))
     best_loss = np.Inf
     for epoch in range(num_epochs):
-        augmented_state = neural_ode(thetas)      
+        augmented_state, total_batch_loss = neural_ode(thetas)      
               
         if epoch == 0:
             exp_gradient = (1.0-beta)*(augmented_state[0,state_len:-1]**2)
@@ -271,30 +275,12 @@ def rms_prop_optimize(thetas):
         thetas = thetas - lr/(np.sqrt(exp_gradient))*(augmented_state[0,state_len:-1])
         lr_counter = lr_counter + 1
 
-        # Check visualization of current best training
-        weights_1, weights_2, bias_1, bias_2 = theta_reshape(thetas) #
-        pred_state_array = np.zeros(shape=(tsteps,state_len),dtype='double') # 
-        pred_rhs_array = np.zeros(shape=(tsteps,state_len),dtype='double') #
-        temp_state = np.copy(true_state_array[0,:])
-
-        pred_state_array[0,:] = true_state_array[0,:]
-
-        for i in range(1,tsteps):
-            time = np.reshape(time_array[i],newshape=(1,1))
-            output_state, output_rhs = euler_forward(temp_state,weights_1,weights_2,bias_1,bias_2,time)
-            pred_state_array[i,:] = output_state[:]
-            pred_rhs_array[i,:] = output_rhs[:]
-            temp_state = np.copy(output_state)
-        
-        temp_loss = np.sum(np.abs(pred_state_array[:,:]-true_state_array[:,:])**2)
-
-        if temp_loss<best_loss:
+        if total_batch_loss<best_loss:
             np.save('Trained_Weights.npy',thetas)
             visualize()
-            best_loss = temp_loss
+            best_loss = total_batch_loss
 
-
-        print('iteration: ',epoch,' Loss: ',np.sum(np.abs(pred_state_array[:,:]-true_state_array[:,:])**2))
+        print('iteration: ',epoch,' Loss: ',best_loss)
         
         if lr_counter > 100:
             lr = lr*0.9
