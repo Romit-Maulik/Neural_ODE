@@ -8,5 +8,5 @@ ODE learning using continuous in time back-propagation
 
 ## Progress to convergence
 <center>
-	<img src="https://github.com/Romit-Maulik/Neural_ODE/blob/master/Figure_2.png" width="600" height="600"/>
+	<img src="https://github.com/Romit-Maulik/Neural_ODE/blob/master/Figure_2.png" width="600" height="400"/>
 </center>
