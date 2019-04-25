@@ -1,0 +1,25 @@
+1. Assume your state is z(t)
+2. You assume a continuous ODE given by d(z)/dt = f(z,t,wb) where wb parameterizes f
+3. Iteratively:
+   a. Evolve forward model to final time z(t=N) using current wb
+   b. Calculate loss at final time (t=N) - L (scalar)
+   c. Calculate f at final time (from model)
+   d. Calculate df/dz, df/dwb, df/dt  (Jacobian)
+   e. Calculate dL/dz, dL/dwb, dL/dt (Augmented dynamics)
+   f. Evolve reverse model to calculate dL/dz(t=0), dL/dwb(t=0), dL/dt(t=0) 
+
+
+
+
+Dimensions:
+1. z - (1 row, 4 columns) - 4 state values
+2. f - (1 row, 4 columns) - 4 state values
+3. L - scalar
+4. wb - flattened to 5x4x4 vector (1 row, 80 columns when flattened) - added an input of time explicitly
+5. dL/dz - (1 row, 4 columns) - this is a
+6. df/dz - (4 rows, 4 columns) - Jacobian basically
+7. dL/dwb - (80 rows, 1 column)
+8. dL/dt - (scalar)
+9. df/dwb - (4 rows, 80 columns)
+10. df/dt - (4 rows, 1 column)
+11. a_aug - (1 row, 4+80+1 columns)
