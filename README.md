@@ -12,10 +12,10 @@ Deployment of the NODE using JAX and its JIT module for deployment on CPU, GPU o
 
 ## Fitting a dynamical system
 <center>
-	<img src="https://github.com/Romit-Maulik/Neural_ODE/blob/master/Figure_1.png" width="600" height="600"/>
+	<img src="https://github.com/Romit-Maulik/Neural_ODE/blob/master/Serial_Training/Figure_1.png" width="600" height="600"/>
 </center>
 
 ## Progress to convergence
 <center>
-	<img src="https://github.com/Romit-Maulik/Neural_ODE/blob/master/Figure_2.png" width="600" height="400"/>
+	<img src="https://github.com/Romit-Maulik/Neural_ODE/blob/master/Serial_Training/Figure_2.png" width="600" height="400"/>
 </center>
